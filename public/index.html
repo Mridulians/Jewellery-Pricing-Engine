@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jewellery Pricing Panel</title>
+</head>
+<body>
+  <h2>Update Metal Rates</h2>
+
+  <form id="rateForm">
+    <label>Gold Rate (per gram):</label><br>
+    <input type="number" name="goldRate" required><br><br>
+
+    <label>Silver Rate (per gram):</label><br>
+    <input type="number" name="silverRate" required><br><br>
+
+    <label>Diamond Rate (per carat):</label><br>
+    <input type="number" name="diamondRate" required><br><br>
+
+    <button type="submit">Update Prices</button>
+  </form>
+
+  <script>
+    const form = document.getElementById("rateForm");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+
+      const data = {
+        goldRate: formData.get("goldRate"),
+        silverRate: formData.get("silverRate"),
+        diamondRate: formData.get("diamondRate")
+      };
+
+      const res = await fetch("/update-prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      alert(result.message);
+    });
+  </script>
+</body>
+</html>
