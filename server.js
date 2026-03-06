@@ -24,14 +24,16 @@ app.post("/update-prices", async (req, res) => {
       for (const variantEdge of product.variants.edges) {
         const variant = variantEdge.node;
 
-        const goldRate = req.body.goldRate;
+        const goldRate = Number(req.body.goldRate);
 
-        const newPrice = goldRate * 5;
+        const newPrice = (parseFloat(variant.price) + goldRate * 5).toFixed(2);
 
-         await updateVariantPrice(variant.id, newPrice);
-         console.log("Updated:", variant.id);
-         break;
+        await updateVariantPrice(variant.id, newPrice);
 
+        console.log("Updated:", variant.id);
+        console.log("Current Price:", variant.price);
+        console.log("New Price:", newPrice);
+        //  break;
 
         // console.log("Variant ID:", variant.id);
         // console.log("Current Price:", variant.price);
