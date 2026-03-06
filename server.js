@@ -28,7 +28,7 @@ app.post("/update-prices", async (req, res) => {
 
         const newPrice = (parseFloat(variant.price) + goldRate * 5).toFixed(2);
 
-        await updateVariantPrice(variant.id, newPrice);
+        await updateVariantPrice(product.id , variant.id, newPrice);
 
         console.log("Updated:", variant.id);
         console.log("Current Price:", variant.price);
@@ -50,7 +50,8 @@ app.post("/update-prices", async (req, res) => {
   }
 });
 
-const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2023-10/graphql.json`;
+// const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2023-10/graphql.json`;
+const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2024-04/graphql.json`;
 
 async function fetchProducts() {
   const query = `
@@ -88,33 +89,214 @@ async function fetchProducts() {
   return response.data;
 }
 
-async function updateVariantPrice(variantId, price) {
+// async function updateVariantPrice(variantId, price) {
+//   const mutation = `
+// mutation productVariantUpdate($input: ProductVariantInput!) {
+//   productVariantUpdate(input: $input) {
+//     productVariant {
+//       id
+//       price
+//     }
+//   }
+// }
+// `;
+
+//   const variables = {
+//     input: {
+//       id: variantId,
+//       price: price.toString(),
+//     },
+//   };
+
+//   await axios.post(
+//     SHOPIFY_URL,
+//     { query: mutation, variables },
+//     {
+//       headers: {
+//         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
+//         "Content-Type": "application/json",
+//       },
+//     },
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+// async function updateVariantPrice(variantId, price) {
+
+//   const mutation = `
+//   mutation productVariantUpdate($input: ProductVariantInput!) {
+//     productVariantUpdate(input: $input) {
+//       productVariant {
+//         id
+//         price
+//       }
+//       userErrors {
+//         field
+//         message
+//       }
+//     }
+//   }
+//   `;
+
+//   const variables = {
+//     input: {
+//       id: variantId,
+//       price: price.toString()
+//     }
+//   };
+
+//   const response = await axios.post(
+//     SHOPIFY_URL,
+//     { query: mutation, variables },
+//     {
+//       headers: {
+//         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
+//         "Content-Type": "application/json"
+//       }
+//     }
+//   );
+
+//   const data = response.data.data.productVariantUpdate;
+
+//   if (data.userErrors.length > 0) {
+//     console.log("SHOPIFY ERROR:", data.userErrors);
+//   } else {
+//     console.log("SUCCESS:", data.productVariant.price);
+//   }
+// }
+
+
+
+// async function updateVariantPrice(variantId, price) {
+
+//   const mutation = `
+//   mutation productVariantUpdate($input: ProductVariantInput!) {
+//     productVariantUpdate(input: $input) {
+//       productVariant {
+//         id
+//         price
+//       }
+//       userErrors {
+//         field
+//         message
+//       }
+//     }
+//   }
+//   `;
+
+//   const variables = {
+//     input: {
+//       id: variantId,
+//       price: price.toString()
+//     }
+//   };
+
+//   const response = await axios.post(
+//     SHOPIFY_URL,
+//     { query: mutation, variables },
+//     {
+//       headers: {
+//         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
+//         "Content-Type": "application/json"
+//       }
+//     }
+//   );
+
+//   console.log("SHOPIFY RESPONSE:");
+//   console.log(JSON.stringify(response.data, null, 2));
+// }
+
+
+
+// async function updateVariantPrice(variantId, price) {
+
+//   const mutation = `
+//   mutation productVariantsBulkUpdate($variants: [ProductVariantsBulkInput!]!) {
+//     productVariantsBulkUpdate(variants: $variants) {
+//       productVariants {
+//         id
+//         price
+//       }
+//       userErrors {
+//         field
+//         message
+//       }
+//     }
+//   }
+//   `;
+
+//   const variables = {
+//     variants: [
+//       {
+//         id: variantId,
+//         price: price.toString()
+//       }
+//     ]
+//   };
+
+//   const response = await axios.post(
+//     SHOPIFY_URL,
+//     { query: mutation, variables },
+//     {
+//       headers: {
+//         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
+//         "Content-Type": "application/json"
+//       }
+//     }
+//   );
+
+//   console.log(JSON.stringify(response.data, null, 2));
+// }
+
+
+
+async function updateVariantPrice(productId, variantId, price) {
+
   const mutation = `
-mutation productVariantUpdate($input: ProductVariantInput!) {
-  productVariantUpdate(input: $input) {
-    productVariant {
-      id
-      price
+  mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+    productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+      productVariants {
+        id
+        price
+      }
+      userErrors {
+        field
+        message
+      }
     }
   }
-}
-`;
+  `;
 
   const variables = {
-    input: {
-      id: variantId,
-      price: price.toString(),
-    },
+    productId: productId,
+    variants: [
+      {
+        id: variantId,
+        price: price.toString()
+      }
+    ]
   };
 
-  await axios.post(
+  const response = await axios.post(
     SHOPIFY_URL,
     { query: mutation, variables },
     {
       headers: {
         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
-        "Content-Type": "application/json",
-      },
-    },
+        "Content-Type": "application/json"
+      }
+    }
   );
+
+  console.log(JSON.stringify(response.data, null, 2));
 }
