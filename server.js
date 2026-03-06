@@ -14,11 +14,32 @@ app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);
 });
 
-
 app.post("/update-prices", async (req, res) => {
   try {
     const products = await fetchProducts();
-    console.log(products);
+
+    for (const productEdge of products.data.products.edges) {
+      const product = productEdge.node;
+
+      for (const variantEdge of product.variants.edges) {
+        const variant = variantEdge.node;
+
+        const goldRate = req.body.goldRate;
+
+        const newPrice = goldRate * 5;
+
+         await updateVariantPrice(variant.id, newPrice);
+         console.log("Updated:", variant.id);
+         break;
+
+
+        // console.log("Variant ID:", variant.id);
+        // console.log("Current Price:", variant.price);
+      }
+    }
+    // console.log(products);
+    // console.log(JSON.stringify(products, null, 2));
+    console.log("no of products", products.data.products.edges.length);
 
     res.json({ message: "Shopify connected successfully" });
   } catch (err) {
@@ -27,22 +48,29 @@ app.post("/update-prices", async (req, res) => {
   }
 });
 
-
-
 const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2023-10/graphql.json`;
 
 async function fetchProducts() {
   const query = `
-  {
-    products(first: 10) {
-      edges {
-        node {
-          id
-          title
+{
+  products(first: 20) {
+    edges {
+      node {
+        id
+        title
+        variants(first: 20) {
+          edges {
+            node {
+              id
+              price
+            }
+          }
         }
       }
     }
-  }`;
+  }
+}
+`;
 
   const response = await axios.post(
     SHOPIFY_URL,
@@ -50,10 +78,41 @@ async function fetchProducts() {
     {
       headers: {
         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
-        "Content-Type": "application/json"
-      }
-    }
+        "Content-Type": "application/json",
+      },
+    },
   );
 
   return response.data;
+}
+
+async function updateVariantPrice(variantId, price) {
+  const mutation = `
+mutation productVariantUpdate($input: ProductVariantInput!) {
+  productVariantUpdate(input: $input) {
+    productVariant {
+      id
+      price
+    }
+  }
+}
+`;
+
+  const variables = {
+    input: {
+      id: variantId,
+      price: price.toString(),
+    },
+  };
+
+  await axios.post(
+    SHOPIFY_URL,
+    { query: mutation, variables },
+    {
+      headers: {
+        "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
+        "Content-Type": "application/json",
+      },
+    },
+  );
 }
