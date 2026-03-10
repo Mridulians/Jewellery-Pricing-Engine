@@ -320,14 +320,14 @@ async function fetchProducts() {
 
   const query = `
 {
-  products(first: 5) {
+  products(first: 50) {
     edges {
       node {
         id
         title
         tags
 
-        metafields(first: 5, namespace: "custom") {
+        metafields(first: 50, namespace: "custom") {
           edges {
             node {
               key
@@ -336,7 +336,7 @@ async function fetchProducts() {
           }
         }
 
-        variants(first: 5) {
+        variants(first: 50) {
           edges {
             node {
               id
