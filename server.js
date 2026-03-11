@@ -188,6 +188,7 @@
 // }
 
 import dotenv from "dotenv";
+
 import express from "express";
 import axios from "axios";
 import cors from "cors";
@@ -232,12 +233,6 @@ app.post("/update-prices", async (req, res) => {
     for (const productEdge of products) {
       const product = productEdge.node;
 
-      // const metafieldsMap = {};
-
-      // product.metafields.forEach((m) => {
-      //   metafieldsMap[m.key] = Number(m.value || 0);
-      // });
-
       const metafieldsMap = {};
 
       product.metafields.edges.forEach((edge) => {
@@ -248,17 +243,21 @@ app.post("/update-prices", async (req, res) => {
       const goldWeight = metafieldsMap.gold_weight || 0;
       const silverWeight = metafieldsMap.silver_weight || 0;
       const diamondCarat = metafieldsMap.diamond_carat || 0;
-      const makingCharge = metafieldsMap.making_charge || 0;
+      // const makingCharge = metafieldsMap.making_charge || 0;
 
       const goldValue = goldWeight * goldRate;
       const silverValue = silverWeight * silverRate;
       const diamondValue = diamondCarat * diamondRate;
 
-      const subtotal = goldValue + silverValue + diamondValue + makingCharge;
+      const subtotal = goldValue + silverValue + diamondValue;
 
-      const gst = subtotal * 0.03;
+      const makingCharge = subtotal * 0.15;  // Assuming making charge is 15% of the subtotal
 
-      const finalPrice = (subtotal + gst).toFixed(2);
+      const total = subtotal + makingCharge;
+
+      const gst = total * 0.03;
+
+      const finalPrice = (total + gst).toFixed(2);
 
       console.log("final Price" , finalPrice);
 
@@ -287,36 +286,7 @@ app.post("/update-prices", async (req, res) => {
 });
 
 async function fetchProducts() {
-  // const query = `
-  // {
-  //   products(first: 20) {
-  //     edges {
-  //       node {
-  //         id
-  //         title
-  //         tags
-  //         metafields(identifiers: [
-  //           {namespace: "custom", key: "gold_weight"},
-  //           {namespace: "custom", key: "silver_weight"},
-  //           {namespace: "custom", key: "diamond_carat"},
-  //           {namespace: "custom", key: "making_charge"}
-  //         ]) {
-  //           key
-  //           value
-  //         }
-  //         variants(first: 20) {
-  //           edges {
-  //             node {
-  //               id
-  //               price
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  // `;
+
 
   const query = `
 {
