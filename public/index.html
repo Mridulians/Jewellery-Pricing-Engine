@@ -1,47 +1,498 @@
-<!DOCTYPE html>
+<!-- <!doctype html>
 <html>
-<head>
-  <title>Jewellery Pricing Panel</title>
-</head>
-<body>
-  <h2>Update Metal Rates</h2>
+  <head>
+    <title>Jewellery Pricing Panel</title>
+  </head>
+  <body>
+    <h2>Update Metal Rates</h2>
 
-  <form id="rateForm">
-    <label>Gold Rate (per gram) 22K:</label><br>
-    <input type="number" name="goldRate" required><br><br>
+    <form id="rateForm">
+      <label>Gold Rate (per gram) 22K:</label><br />
+      <input type="number" name="goldRate" required /><br /><br />
 
-    <label>Silver Rate (per gram):</label><br>
-    <input type="number" name="silverRate" required><br><br>
+      <label>Silver Rate (per gram):</label><br />
+      <input type="number" name="silverRate" required /><br /><br />
 
-    <label>Diamond Rate (per carat):</label><br>
-    <input type="number" name="diamondRate" required><br><br>
+      <label>Diamond Rate (per carat):</label><br />
+      <input type="number" name="diamondRate" required /><br /><br />
 
-    <button type="submit">Update Prices</button>
-  </form>
+      <button type="submit">Update Prices</button>
+    </form>
 
-  <script>
-    const form = document.getElementById("rateForm");
+    <script>
+      const form = document.getElementById("rateForm");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-      const formData = new FormData(form);
+        const formData = new FormData(form);
 
-      const data = {
-        goldRate: formData.get("goldRate"),
-        silverRate: formData.get("silverRate"),
-        diamondRate: formData.get("diamondRate")
-      };
+        const data = {
+          goldRate: formData.get("goldRate"),
+          silverRate: formData.get("silverRate"),
+          diamondRate: formData.get("diamondRate"),
+        };
 
-      const res = await fetch("/update-prices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        const res = await fetch("/update-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        const result = await res.json();
+        alert(result.message);
       });
+    </script>
+  </body>
+</html> -->
 
-      const result = await res.json();
-      alert(result.message);
-    });
-  </script>
-</body>
+
+
+
+
+
+
+<!-- 
+<!doctype html>
+<html>
+  <head>
+    <title>Jewellery Pricing Panel</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 400px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      button[type="submit"] {
+        background-color: #008060;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        font-size: 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      button[type="submit"]:disabled {
+        background-color: #aaa;
+        cursor: not-allowed;
+      }
+
+      /* Spinner */
+      .spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 3px solid #ffffff55;
+        border-top: 3px solid #fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .spinner.visible {
+        display: inline-block;
+      }
+
+      /* Status message */
+      #statusMsg {
+        margin-top: 16px;
+        font-size: 14px;
+        color: #555;
+        display: none;
+      }
+
+      input[type="number"] {
+        padding: 8px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Update Metal Rates</h2>
+
+    <form id="rateForm">
+      <label>Gold Rate (per gram) 22K:</label><br />
+      <input type="number" name="goldRate" required /><br /><br />
+
+      <label>Silver Rate (per gram):</label><br />
+      <input type="number" name="silverRate" required /><br /><br />
+
+      <label>Diamond Rate (per carat):</label><br />
+      <input type="number" name="diamondRate" required /><br /><br />
+
+      <button type="submit" id="submitBtn">
+        <span id="btnText">Update Prices</span>
+        <span class="spinner" id="spinner"></span>
+      </button>
+    </form>
+
+    <div id="progressSection" style="display: none; margin-top: 20px">
+      <p id="progressText">Starting...</p>
+      <div
+        style="
+          background: #eee;
+          border-radius: 8px;
+          overflow: hidden;
+          height: 20px;
+          width: 100%;
+        "
+      >
+        <div
+          id="progressBar"
+          style="
+            background: #008060;
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s;
+          "
+        ></div>
+      </div>
+      <p id="progressCount" style="font-size: 13px; color: #555"></p>
+    </div>
+
+    <div id="statusMsg"></div>
+
+    <!-- <script>
+      const form = document.getElementById("rateForm");
+      const submitBtn = document.getElementById("submitBtn");
+      const spinner = document.getElementById("spinner");
+      const btnText = document.getElementById("btnText");
+      const statusMsg = document.getElementById("statusMsg");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // ✅ Disable button and show loader
+        submitBtn.disabled = true;
+        spinner.classList.add("visible");
+        btnText.textContent = "Updating...";
+        statusMsg.style.display = "block";
+        statusMsg.style.color = "#555";
+        statusMsg.textContent = "⏳ Updating prices, please wait...";
+
+        const formData = new FormData(form);
+        const data = {
+          goldRate: formData.get("goldRate"),
+          silverRate: formData.get("silverRate"),
+          diamondRate: formData.get("diamondRate"),
+        };
+
+        try {
+          const res = await fetch("/update-prices", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          const result = await res.json();
+
+          // ✅ Success
+          statusMsg.style.color = "green";
+          statusMsg.textContent = "✅ " + result.message;
+
+        } catch (err) {
+          // ❌ Error
+          statusMsg.style.color = "red";
+          statusMsg.textContent = "❌ Something went wrong. Please try again.";
+
+        } finally {
+          // ✅ Always re-enable button and hide loader
+          submitBtn.disabled = false;
+          spinner.classList.remove("visible");
+          btnText.textContent = "Update Prices";
+        }
+      });
+    </script> -->
+
+    <!-- <script>
+      let pollInterval = null;
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        submitBtn.disabled = true;
+        spinner.classList.add("visible");
+        btnText.textContent = "Starting...";
+
+        // Show progress section
+        document.getElementById("progressSection").style.display = "block";
+        document.getElementById("progressText").textContent =
+          "⏳ Starting price update...";
+
+        const data = {
+          goldRate: form.goldRate.value,
+          silverRate: form.silverRate.value,
+          diamondRate: form.diamondRate.value,
+        };
+
+        await fetch("/update-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        // ✅ Start polling for progress
+        pollInterval = setInterval(async () => {
+          const res = await fetch("/update-progress");
+          const progress = await res.json();
+
+          const percent =
+            progress.total > 0
+              ? Math.round((progress.done / progress.total) * 100)
+              : 0;
+
+          document.getElementById("progressBar").style.width = percent + "%";
+          document.getElementById("progressText").textContent =
+            progress.message;
+          document.getElementById("progressCount").textContent =
+            progress.total > 0
+              ? `${progress.done} / ${progress.total} products updated`
+              : "";
+
+          if (!progress.running) {
+            clearInterval(pollInterval);
+            submitBtn.disabled = false;
+            spinner.classList.remove("visible");
+            btnText.textContent = "Update Prices";
+          }
+        }, 1000); // Poll every second
+      });
+    </script>
+  </body>
+</html> --> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!doctype html>
+<html>
+  <head>
+    <title>Jewellery Pricing Panel</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 400px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      input[type="number"] {
+        padding: 8px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      #submitBtn {
+        background-color: #008060;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        font-size: 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      #submitBtn:disabled {
+        background-color: #aaa;
+        cursor: not-allowed;
+      }
+      .spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 3px solid #ffffff55;
+        border-top: 3px solid #fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .spinner.visible {
+        display: inline-block;
+      }
+      #progressSection {
+        display: none;
+        margin-top: 24px;
+      }
+      #progressText {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 8px;
+      }
+      #progressBarWrapper {
+        background: #eee;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 20px;
+        width: 100%;
+      }
+      #progressBar {
+        background: #008060;
+        height: 100%;
+        width: 0%;
+        transition: width 0.4s;
+      }
+      #progressCount {
+        font-size: 13px;
+        color: #555;
+        margin-top: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Update Metal Rates</h2>
+
+    <form id="rateForm">
+      <label>Gold Rate (per gram) 22K:</label><br />
+      <input type="number" id="goldRate" name="goldRate" required /><br /><br />
+
+      <label>Silver Rate (per gram):</label><br />
+      <input type="number" id="silverRate" name="silverRate" required /><br /><br />
+
+      <label>Diamond Rate (per carat):</label><br />
+      <input type="number" id="diamondRate" name="diamondRate" required /><br /><br />
+
+      <button type="submit" id="submitBtn">
+        <span id="btnText">Update Prices</span>
+        <span class="spinner" id="spinner"></span>
+      </button>
+    </form>
+
+    <!-- Progress Section -->
+    <div id="progressSection">
+      <p id="progressText">Starting...</p>
+      <div id="progressBarWrapper">
+        <div id="progressBar"></div>
+      </div>
+      <p id="progressCount"></p>
+    </div>
+
+    <script>
+      const form = document.getElementById("rateForm");
+      const submitBtn = document.getElementById("submitBtn");
+      const spinner = document.getElementById("spinner");
+      const btnText = document.getElementById("btnText");
+      const progressSection = document.getElementById("progressSection");
+      const progressText = document.getElementById("progressText");
+      const progressBar = document.getElementById("progressBar");
+      const progressCount = document.getElementById("progressCount");
+
+      let pollInterval = null;
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // ✅ Disable button and show spinner
+        submitBtn.disabled = true;
+        spinner.classList.add("visible");
+        btnText.textContent = "Starting...";
+
+        // ✅ Show progress section
+        progressSection.style.display = "block";
+        progressText.textContent = "⏳ Connecting to Shopify...";
+        progressBar.style.width = "0%";
+        progressCount.textContent = "";
+
+        const data = {
+          goldRate: document.getElementById("goldRate").value,
+          silverRate: document.getElementById("silverRate").value,
+          diamondRate: document.getElementById("diamondRate").value,
+        };
+
+        console.log("Sending data:", data);
+
+        try {
+          // ✅ Fire the update request (returns immediately)
+          const res = await fetch("/update-prices", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          const result = await res.json();
+          console.log("Server response:", result);
+          progressText.textContent = "⏳ " + result.message;
+
+          // ✅ Start polling progress every 1 second
+          pollInterval = setInterval(async () => {
+            try {
+              const progressRes = await fetch("/update-progress");
+              const progress = await progressRes.json();
+
+              console.log("Progress:", progress);
+
+              const percent = progress.total > 0
+                ? Math.round((progress.done / progress.total) * 100)
+                : 0;
+
+              progressBar.style.width = percent + "%";
+              progressText.textContent = progress.message || "⏳ Processing...";
+
+              if (progress.total > 0) {
+                progressCount.textContent = `${progress.done} / ${progress.total} products updated (${percent}%)`;
+              }
+
+              // ✅ Stop polling when done or error
+              if (!progress.running && progress.status !== "idle") {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                submitBtn.disabled = false;
+                spinner.classList.remove("visible");
+                btnText.textContent = "Update Prices";
+
+                if (progress.status === "done") {
+                  progressText.style.color = "green";
+                  progressBar.style.background = "#008060";
+                } else if (progress.status === "error") {
+                  progressText.style.color = "red";
+                  progressBar.style.background = "red";
+                }
+              }
+
+            } catch (pollErr) {
+              console.error("Polling error:", pollErr);
+            }
+          }, 1000);
+
+        } catch (err) {
+          console.error("Submit error:", err);
+          progressText.style.color = "red";
+          progressText.textContent = "❌ Failed to connect to server.";
+          submitBtn.disabled = false;
+          spinner.classList.remove("visible");
+          btnText.textContent = "Update Prices";
+        }
+      });
+    </script>
+  </body>
 </html>
