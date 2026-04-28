@@ -187,9 +187,6 @@
 //   console.log(JSON.stringify(response.data, null, 2));
 // }
 
-
-
-
 //WORKING CODE FOR THE PRICE CALCULATION AND UPDATE WITHOUT USING TAGS
 // import dotenv from "dotenv";
 
@@ -377,19 +374,7 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
 // New code for saving breakdown in metafields along with price update
-
-
 
 import dotenv from "dotenv";
 
@@ -482,8 +467,6 @@ const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2024-04/grap
 //     //   console.log(`Updated product: ${product.title}`);
 //     // }
 
-
-
 //     for (const productEdge of products) {
 //       const product = productEdge.node;
 
@@ -545,8 +528,6 @@ const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2024-04/grap
 //   }
 // });
 
-
-
 // async function fetchProducts() {
 //   const query = `
 // {
@@ -597,32 +578,36 @@ const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2024-04/grap
 //   return response.data;
 // }
 
-
-
-
 app.post("/update-prices", async (req, res) => {
   const goldRate = Number(req.body.goldRate || 0);
   const silverRate = Number(req.body.silverRate || 0);
   const diamondRate = Number(req.body.diamondRate || 0);
+  const huid = Number(req.body.huid || 0); // ✅ Add this line
 
   // ✅ Respond immediately — don't make user wait
   res.json({ message: "Price update started! Check progress below." });
 
   // ✅ Run update in background
-  runPriceUpdate(goldRate, silverRate, diamondRate);
+  runPriceUpdate(goldRate, silverRate, diamondRate, huid);
 });
 
 // Track progress globally
-let updateProgress = { 
-  running: false, 
-  total: 0, 
-  done: 0, 
+let updateProgress = {
+  running: false,
+  total: 0,
+  done: 0,
   status: "idle",
-  message: ""
+  message: "",
 };
 
-async function runPriceUpdate(goldRate, silverRate, diamondRate) {
-  updateProgress = { running: true, total: 0, done: 0, status: "running", message: "Fetching products..." };
+async function runPriceUpdate(goldRate, silverRate, diamondRate, huid) {
+  updateProgress = {
+    running: true,
+    total: 0,
+    done: 0,
+    status: "running",
+    message: "Fetching products...",
+  };
 
   try {
     const products = await fetchAllProducts();
@@ -648,7 +633,9 @@ async function runPriceUpdate(goldRate, silverRate, diamondRate) {
 
       const subtotal = goldValue + silverValue + diamondValue;
       const makingCharge = subtotal * 0.15;
-      const total = subtotal + makingCharge;
+      // ✅ HUID is a fixed flat amount added to the price, not a percentage
+      const huidCharge = huid;
+      const total = subtotal + makingCharge + huidCharge;
       const gst = total * 0.03;
       const finalPrice = (total + gst).toFixed(2);
 
@@ -658,11 +645,13 @@ async function runPriceUpdate(goldRate, silverRate, diamondRate) {
       }));
 
       await updateVariantPrice(product.id, variants);
+
       await saveBreakdownMetafields(product.id, {
         gold_value: goldValue.toFixed(2),
         silver_value: silverValue.toFixed(2),
         diamond_value: diamondValue.toFixed(2),
         making_charge: makingCharge.toFixed(2),
+        huid:           huidCharge.toFixed(2),          // ✅ Add this
         subtotal: (subtotal + makingCharge).toFixed(2),
         gst: gst.toFixed(2),
         final_price: finalPrice,
@@ -673,13 +662,26 @@ async function runPriceUpdate(goldRate, silverRate, diamondRate) {
 
       // ✅ Update progress
       updateProgress.done++;
-      console.log(`✅ ${updateProgress.done}/${updateProgress.total} - ${product.title}`);
+      console.log(
+        `✅ ${updateProgress.done}/${updateProgress.total} - ${product.title}`,
+      );
     });
 
-    updateProgress = { running: false, total: updateProgress.total, done: updateProgress.total, status: "done", message: `✅ All ${updateProgress.total} products updated!` };
-
+    updateProgress = {
+      running: false,
+      total: updateProgress.total,
+      done: updateProgress.total,
+      status: "done",
+      message: `✅ All ${updateProgress.total} products updated!`,
+    };
   } catch (err) {
-    updateProgress = { running: false, total: 0, done: 0, status: "error", message: "❌ Update failed: " + err.message };
+    updateProgress = {
+      running: false,
+      total: 0,
+      done: 0,
+      status: "error",
+      message: "❌ Update failed: " + err.message,
+    };
     console.error(err.message);
   }
 }
@@ -688,8 +690,6 @@ async function runPriceUpdate(goldRate, silverRate, diamondRate) {
 app.get("/update-progress", (req, res) => {
   res.json(updateProgress);
 });
-
-
 
 async function fetchAllProducts() {
   let allProducts = [];
@@ -738,7 +738,7 @@ async function fetchAllProducts() {
           "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     const data = response.data.data.products;
@@ -755,15 +755,12 @@ async function fetchAllProducts() {
     console.log(`Fetched ${allProducts.length} products so far...`);
 
     // Small delay between page fetches
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
   }
 
   console.log(`Total products fetched: ${allProducts.length}`);
   return allProducts;
 }
-
-
-
 
 async function updateVariantPrice(productId, variants) {
   const mutation = `
@@ -801,8 +798,6 @@ async function updateVariantPrice(productId, variants) {
     console.error(response.data.data.productVariantsBulkUpdate.userErrors);
   }
 }
-
-
 
 // ✅ NEW: Function to save breakdown into metafields
 async function saveBreakdownMetafields(productId, breakdown) {
@@ -842,26 +837,28 @@ async function saveBreakdownMetafields(productId, breakdown) {
         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
         "Content-Type": "application/json",
       },
-    }
+    },
   );
 
   if (response.data.data.productUpdate.userErrors.length) {
-    console.error("Metafield errors:", response.data.data.productUpdate.userErrors);
+    console.error(
+      "Metafield errors:",
+      response.data.data.productUpdate.userErrors,
+    );
   }
 }
-
-
-
 
 // new utility function to process items in batches with delay to respect rate limits
 async function processBatch(items, batchSize, handler) {
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     await Promise.all(batch.map(handler));
-    console.log(`✅ Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(items.length / batchSize)} done`);
+    console.log(
+      `✅ Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(items.length / batchSize)} done`,
+    );
     // Delay between batches to respect Shopify rate limits
     if (i + batchSize < items.length) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 }
