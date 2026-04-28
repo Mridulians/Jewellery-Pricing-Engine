@@ -631,11 +631,13 @@ async function runPriceUpdate(goldRate, silverRate, diamondRate, huid) {
       const silverValue = silverWeight * silverRate;
       const diamondValue = diamondCarat * diamondRate;
 
-      const subtotal = goldValue + silverValue + diamondValue;
-      const makingCharge = subtotal * 0.15;
       // ✅ HUID is a fixed flat amount added to the price, not a percentage
       const huidCharge = huid;
-      const total = subtotal + makingCharge + huidCharge;
+
+      const subtotal = goldValue + silverValue + diamondValue + huidCharge; // ✅ Add huidCharge to subtotal
+      const makingCharge = subtotal * 0.15;
+
+      const total = subtotal + makingCharge;
       const gst = total * 0.03;
       const finalPrice = (total + gst).toFixed(2);
 
@@ -651,7 +653,7 @@ async function runPriceUpdate(goldRate, silverRate, diamondRate, huid) {
         silver_value: silverValue.toFixed(2),
         diamond_value: diamondValue.toFixed(2),
         making_charge: makingCharge.toFixed(2),
-        huid:           huidCharge.toFixed(2),          // ✅ Add this
+        huid: huidCharge.toFixed(2), // ✅ Add this
         subtotal: (subtotal + makingCharge).toFixed(2),
         gst: gst.toFixed(2),
         final_price: finalPrice,
