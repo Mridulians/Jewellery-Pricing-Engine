@@ -821,11 +821,13 @@ async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate,
       }));
 
       await updateVariantPrice(product.id, variants);
+
       await saveBreakdownMetafields(product.id, {
         gold_value:    goldValue.toFixed(2),
         silver_value:  silverValue.toFixed(2),
         diamond_value: diamondValue.toFixed(2),
         making_charge: makingCharge.toFixed(2),
+        making_charge_percent:   (makingChargePercent * 100).toFixed(0), // ✅ Add this
         huid:          huidCharge.toFixed(2),
         subtotal:      subtotal.toFixed(2),
         gst:           gst.toFixed(2),
