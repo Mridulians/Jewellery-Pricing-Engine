@@ -578,29 +578,55 @@ const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2024-04/grap
 //   return response.data;
 // }
 
+// app.post("/update-prices", async (req, res) => {
+//   const goldRate = Number(req.body.goldRate || 0);
+//   const silverRate = Number(req.body.silverRate || 0);
+//   // const diamondRate = Number(req.body.diamondRate || 0);
+//   const igiDiamondRate = Number(req.body.igiDiamondRate || 0);
+//   const giaDiamondRate = Number(req.body.giaDiamondRate || 0);
+//   const hrdDiamondRate = Number(req.body.hrdDiamondRate || 0);
+//   const huid = Number(req.body.huid || 0); // ✅ Add this line
+
+//   // ✅ Respond immediately — don't make user wait
+//   res.json({ message: "Price update started! Check progress below." });
+
+//   // ✅ Run update in background
+//   // runPriceUpdate(goldRate, silverRate, diamondRate, huid);
+//   runPriceUpdate(
+//     goldRate,
+//     silverRate,
+//     igiDiamondRate,
+//     giaDiamondRate,
+//     hrdDiamondRate,
+//     huid,
+//   );
+// });
+
+
+
 app.post("/update-prices", async (req, res) => {
-  const goldRate = Number(req.body.goldRate || 0);
-  const silverRate = Number(req.body.silverRate || 0);
-  // const diamondRate = Number(req.body.diamondRate || 0);
+  const goldRate22K    = Number(req.body.goldRate22K || 0);
+  const goldRate18K    = Number(req.body.goldRate18K || 0);
+  const goldRate14K    = Number(req.body.goldRate14K || 0);
+  const silverRate     = Number(req.body.silverRate || 0);
   const igiDiamondRate = Number(req.body.igiDiamondRate || 0);
   const giaDiamondRate = Number(req.body.giaDiamondRate || 0);
   const hrdDiamondRate = Number(req.body.hrdDiamondRate || 0);
-  const huid = Number(req.body.huid || 0); // ✅ Add this line
+  const huid           = Number(req.body.huid || 0);
 
-  // ✅ Respond immediately — don't make user wait
-  res.json({ message: "Price update started! Check progress below." });
+  console.log("Rates received:", {
+    goldRate22K, goldRate18K, goldRate14K,
+    silverRate, igiDiamondRate, giaDiamondRate, hrdDiamondRate, huid
+  });
 
-  // ✅ Run update in background
-  // runPriceUpdate(goldRate, silverRate, diamondRate, huid);
-  runPriceUpdate(
-    goldRate,
-    silverRate,
-    igiDiamondRate,
-    giaDiamondRate,
-    hrdDiamondRate,
-    huid,
-  );
+  // ✅ Respond immediately
+  res.json({ message: "Price update started! Tracking progress below." });
+
+  // ✅ Run in background
+  runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate, igiDiamondRate, giaDiamondRate, hrdDiamondRate, huid);
 });
+
+
 
 // Track progress globally
 let updateProgress = {
@@ -612,21 +638,124 @@ let updateProgress = {
 };
 
 // async function runPriceUpdate(goldRate, silverRate, diamondRate, huid) {
-async function runPriceUpdate(
-  goldRate,
-  silverRate,
-  igiDiamondRate,
-  giaDiamondRate,
-  hrdDiamondRate,
-  huid,
-) {
-  updateProgress = {
-    running: true,
-    total: 0,
-    done: 0,
-    status: "running",
-    message: "Fetching products...",
-  };
+// async function runPriceUpdate(
+//   goldRate,
+//   silverRate,
+//   igiDiamondRate,
+//   giaDiamondRate,
+//   hrdDiamondRate,
+//   huid,
+// ) {
+//   updateProgress = {
+//     running: true,
+//     total: 0,
+//     done: 0,
+//     status: "running",
+//     message: "Fetching products...",
+//   };
+
+//   try {
+//     const products = await fetchAllProducts();
+//     updateProgress.total = products.length;
+//     updateProgress.message = `Updating ${products.length} products...`;
+
+//     await processBatch(products, 5, async (productEdge) => {
+//       const product = productEdge.node;
+
+//       // const metafieldsMap = {};
+//       // product.metafields.edges.forEach((edge) => {
+//       //   const m = edge.node;
+//       //   metafieldsMap[m.key] = Number(m.value || 0);
+//       // });
+
+//       const metafieldsMap = {};
+//       const metafieldsMapRaw = {}; // ✅ Keep raw string values too
+//       product.metafields.edges.forEach((edge) => {
+//         const m = edge.node;
+//         metafieldsMap[m.key] = Number(m.value || 0);
+//         metafieldsMapRaw[m.key] = m.value || ""; // ✅ Raw string
+//       });
+
+//       const goldWeight = metafieldsMap.gold_weight || 0;
+//       const silverWeight = metafieldsMap.silver_weight || 0;
+//       const diamondCarat = metafieldsMap.diamond_carat || 0;
+//       const diamondType = metafieldsMapRaw.diamond_type || ""; // ✅ Read from raw
+
+//       // ✅ Pick the correct diamond rate based on type
+//       let diamondRate = 0;
+//       if (diamondType.toUpperCase() === "IGI") {
+//         diamondRate = igiDiamondRate;
+//       } else if (diamondType.toUpperCase() === "GIA") {
+//         diamondRate = giaDiamondRate;
+//       } else if (diamondType.toUpperCase() === "HRD") {
+//         diamondRate = hrdDiamondRate;
+//       }
+
+//       const goldValue = goldWeight * goldRate;
+//       const silverValue = silverWeight * silverRate;
+//       const diamondValue = diamondCarat * diamondRate;
+
+//       // ✅ HUID is a fixed flat amount added to the price, not a percentage
+//       const huidCharge = huid;
+
+//       const subtotal = goldValue + silverValue + diamondValue + huidCharge; // ✅ Add huidCharge to subtotal
+//       const makingCharge = subtotal * 0.15;
+
+//       const total = subtotal + makingCharge;
+//       const gst = total * 0.03;
+//       const finalPrice = (total + gst).toFixed(2);
+
+//       const variants = product.variants.edges.map((v) => ({
+//         id: v.node.id,
+//         price: finalPrice,
+//       }));
+
+//       await updateVariantPrice(product.id, variants);
+
+//       await saveBreakdownMetafields(product.id, {
+//         gold_value: goldValue.toFixed(2),
+//         silver_value: silverValue.toFixed(2),
+//         diamond_value: diamondValue.toFixed(2),
+//         making_charge: makingCharge.toFixed(2),
+//         huid: huidCharge.toFixed(2), // ✅ Add this
+//         subtotal: (subtotal + makingCharge).toFixed(2),
+//         gst: gst.toFixed(2),
+//         final_price: finalPrice,
+//         gold_rate: goldRate.toFixed(2),
+//         silver_rate: silverRate.toFixed(2),
+//         // diamond_rate: diamondRate.toFixed(2),
+//         diamond_rate: diamondRate.toFixed(2), // ✅ Saves the actual rate used for this product
+//         diamond_type: diamondType,
+//       });
+
+//       // ✅ Update progress
+//       updateProgress.done++;
+//       console.log(
+//         `✅ ${updateProgress.done}/${updateProgress.total} - ${product.title}`,
+//       );
+//     });
+
+//     updateProgress = {
+//       running: false,
+//       total: updateProgress.total,
+//       done: updateProgress.total,
+//       status: "done",
+//       message: `✅ All ${updateProgress.total} products updated!`,
+//     };
+//   } catch (err) {
+//     updateProgress = {
+//       running: false,
+//       total: 0,
+//       done: 0,
+//       status: "error",
+//       message: "❌ Update failed: " + err.message,
+//     };
+//     console.error(err.message);
+//   }
+// }
+
+async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate, igiDiamondRate, giaDiamondRate, hrdDiamondRate, huid) {
+  updateProgress = { running: true, total: 0, done: 0, status: "running", message: "Fetching products..." };
 
   try {
     const products = await fetchAllProducts();
@@ -636,48 +765,55 @@ async function runPriceUpdate(
     await processBatch(products, 5, async (productEdge) => {
       const product = productEdge.node;
 
-      // const metafieldsMap = {};
-      // product.metafields.edges.forEach((edge) => {
-      //   const m = edge.node;
-      //   metafieldsMap[m.key] = Number(m.value || 0);
-      // });
-
       const metafieldsMap = {};
-      const metafieldsMapRaw = {}; // ✅ Keep raw string values too
       product.metafields.edges.forEach((edge) => {
         const m = edge.node;
-        metafieldsMap[m.key] = Number(m.value || 0);
-        metafieldsMapRaw[m.key] = m.value || ""; // ✅ Raw string
+        metafieldsMap[m.key] = m.value;
       });
 
-      const goldWeight = metafieldsMap.gold_weight || 0;
-      const silverWeight = metafieldsMap.silver_weight || 0;
-      const diamondCarat = metafieldsMap.diamond_carat || 0;
-      const diamondType = metafieldsMapRaw.diamond_type || ""; // ✅ Read from raw
+      // ✅ Read weights as numbers
+      const goldWeight   = Number(metafieldsMap.gold_weight   || 0);
+      const silverWeight = Number(metafieldsMap.silver_weight || 0);
+      const diamondCarat = Number(metafieldsMap.diamond_carat || 0);
 
-      // ✅ Pick the correct diamond rate based on type
-      let diamondRate = 0;
-      if (diamondType.toUpperCase() === "IGI") {
-        diamondRate = igiDiamondRate;
-      } else if (diamondType.toUpperCase() === "GIA") {
+      // ✅ Read gold karat type from metafield (default 22K)
+      const metalType = (metafieldsMap.metal_type || '22K').toString().trim().toUpperCase();
+
+      // ✅ Pick correct gold rate based on karat
+      let goldRate = goldRate22K; // default
+      let makingChargePercent = 0.15; // default 22K
+
+      if (metalType.includes('18')) {
+        goldRate = goldRate18K;
+        makingChargePercent = 0.18; // 18K making charge
+      } else if (metalType.includes('14')) {
+        goldRate = goldRate14K;
+        makingChargePercent = 0.20; // 14K making charge
+      } else {
+        goldRate = goldRate22K;
+        makingChargePercent = 0.15; // 22K making charge
+      }
+
+      // ✅ Pick correct diamond rate based on diamond_type metafield
+      const diamondType = (metafieldsMap.diamond_type || '').toString().trim().toUpperCase();
+      let diamondRate = igiDiamondRate; // default IGI
+      if (diamondType.includes('GIA')) {
         diamondRate = giaDiamondRate;
-      } else if (diamondType.toUpperCase() === "HRD") {
+      } else if (diamondType.includes('HRD')) {
         diamondRate = hrdDiamondRate;
       }
 
-      const goldValue = goldWeight * goldRate;
-      const silverValue = silverWeight * silverRate;
+      // ✅ Price calculation
+      const goldValue    = goldWeight * goldRate;
+      const silverValue  = silverWeight * silverRate;
       const diamondValue = diamondCarat * diamondRate;
 
-      // ✅ HUID is a fixed flat amount added to the price, not a percentage
-      const huidCharge = huid;
-
-      const subtotal = goldValue + silverValue + diamondValue + huidCharge; // ✅ Add huidCharge to subtotal
-      const makingCharge = subtotal * 0.15;
-
-      const total = subtotal + makingCharge;
-      const gst = total * 0.03;
-      const finalPrice = (total + gst).toFixed(2);
+      const metalSubtotal  = goldValue + silverValue + diamondValue;
+      const makingCharge   = metalSubtotal * makingChargePercent;
+      const huidCharge     = huid;
+      const subtotal       = metalSubtotal + makingCharge + huidCharge;
+      const gst            = subtotal * 0.03;
+      const finalPrice     = (subtotal + gst).toFixed(2);
 
       const variants = product.variants.edges.map((v) => ({
         id: v.node.id,
@@ -685,28 +821,22 @@ async function runPriceUpdate(
       }));
 
       await updateVariantPrice(product.id, variants);
-
       await saveBreakdownMetafields(product.id, {
-        gold_value: goldValue.toFixed(2),
-        silver_value: silverValue.toFixed(2),
+        gold_value:    goldValue.toFixed(2),
+        silver_value:  silverValue.toFixed(2),
         diamond_value: diamondValue.toFixed(2),
         making_charge: makingCharge.toFixed(2),
-        huid: huidCharge.toFixed(2), // ✅ Add this
-        subtotal: (subtotal + makingCharge).toFixed(2),
-        gst: gst.toFixed(2),
-        final_price: finalPrice,
-        gold_rate: goldRate.toFixed(2),
-        silver_rate: silverRate.toFixed(2),
-        // diamond_rate: diamondRate.toFixed(2),
-        diamond_rate: diamondRate.toFixed(2), // ✅ Saves the actual rate used for this product
-        diamond_type: diamondType,
+        huid:          huidCharge.toFixed(2),
+        subtotal:      subtotal.toFixed(2),
+        gst:           gst.toFixed(2),
+        final_price:   finalPrice,
+        gold_rate:     goldRate.toFixed(2),
+        silver_rate:   silverRate.toFixed(2),
+        diamond_rate:  diamondRate.toFixed(2),
       });
 
-      // ✅ Update progress
       updateProgress.done++;
-      console.log(
-        `✅ ${updateProgress.done}/${updateProgress.total} - ${product.title}`,
-      );
+      console.log(`✅ ${updateProgress.done}/${updateProgress.total} - ${product.title} [${metalType}] [${diamondType || 'No Diamond'}]`);
     });
 
     updateProgress = {
@@ -714,16 +844,11 @@ async function runPriceUpdate(
       total: updateProgress.total,
       done: updateProgress.total,
       status: "done",
-      message: `✅ All ${updateProgress.total} products updated!`,
+      message: `✅ All ${updateProgress.total} products updated!`
     };
+
   } catch (err) {
-    updateProgress = {
-      running: false,
-      total: 0,
-      done: 0,
-      status: "error",
-      message: "❌ Update failed: " + err.message,
-    };
+    updateProgress = { running: false, total: 0, done: 0, status: "error", message: "❌ Update failed: " + err.message };
     console.error(err.message);
   }
 }
