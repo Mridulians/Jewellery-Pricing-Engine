@@ -771,6 +771,8 @@ async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate,
         metafieldsMap[m.key] = m.value;
       });
 
+      const noOfItems = Number(metafieldsMap.no_of_items || 1); // ✅ default 1 if not set
+
       // ✅ Read weights as numbers
       const goldWeight   = Number(metafieldsMap.gold_weight   || 0);
       const silverWeight = Number(metafieldsMap.silver_weight || 0);
@@ -811,7 +813,8 @@ async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate,
       const metalSubtotal  = goldValue + silverValue + diamondValue;
       // const makingCharge   = metalSubtotal * makingChargePercent;
       const makingCharge = goldValue * makingChargePercent; // ✅ Making charge is only on gold value, not on silver/diamond
-      const huidCharge     = huid;
+     const huidCharge = huid * noOfItems;
+      // const huidCharge     = huid;
       const subtotal       = metalSubtotal + makingCharge + huidCharge;
       const gst            = subtotal * 0.03;
       const finalPrice     = (subtotal + gst).toFixed(2);
