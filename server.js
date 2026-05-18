@@ -811,8 +811,8 @@ async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate,
       const diamondValue = diamondCarat * diamondRate;
 
       const metalSubtotal  = goldValue + silverValue + diamondValue;
-      // const makingCharge   = metalSubtotal * makingChargePercent;
-      const makingCharge = goldValue * makingChargePercent; // ✅ Making charge is only on gold value, not on silver/diamond
+      const makingCharge   = metalSubtotal * makingChargePercent;
+      // const makingCharge = goldValue * makingChargePercent; // ✅ Making charge is only on gold value, not on silver/diamond
      const huidCharge = huid * noOfItems;
       // const huidCharge     = huid;
       const subtotal       = metalSubtotal + makingCharge + huidCharge;
