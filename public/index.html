@@ -40,7 +40,10 @@
         gap: 10px;
         margin-top: 24px;
       }
-      #submitBtn:disabled { background-color: #aaa; cursor: not-allowed; }
+      #submitBtn:disabled {
+        background-color: #aaa;
+        cursor: not-allowed;
+      }
       .spinner {
         display: none;
         width: 16px;
@@ -50,58 +53,125 @@
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
       }
-      @keyframes spin { to { transform: rotate(360deg); } }
-      .spinner.visible { display: inline-block; }
-      #progressSection { display: none; margin-top: 24px; }
-      #progressText { font-size: 14px; color: #333; margin-bottom: 8px; }
-      #progressBarWrapper {
-        background: #eee; border-radius: 8px;
-        overflow: hidden; height: 20px; width: 100%;
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
-      #progressBar { background: #008060; height: 100%; width: 0%; transition: width 0.4s; }
-      #progressCount { font-size: 13px; color: #555; margin-top: 6px; }
+      .spinner.visible {
+        display: inline-block;
+      }
+      #progressSection {
+        display: none;
+        margin-top: 24px;
+      }
+      #progressText {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 8px;
+      }
+      #progressBarWrapper {
+        background: #eee;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 20px;
+        width: 100%;
+      }
+      #progressBar {
+        background: #008060;
+        height: 100%;
+        width: 0%;
+        transition: width 0.4s;
+      }
+      #progressCount {
+        font-size: 13px;
+        color: #555;
+        margin-top: 6px;
+      }
     </style>
   </head>
   <body>
     <h2>Update Metal Rates</h2>
 
     <form id="rateForm">
-
       <!-- GOLD RATES -->
       <div class="section-label">🟡 Gold Rates</div>
 
       <label>Gold Rate (per gram) 22K:</label><br />
-      <input type="number" id="goldRate22K" name="goldRate22K" required /><br /><br />
+      <input
+        type="number"
+        id="goldRate22K"
+        name="goldRate22K"
+        required
+      /><br /><br />
 
       <label>Gold Rate (per gram) 18K:</label><br />
-      <input type="number" id="goldRate18K" name="goldRate18K" required /><br /><br />
+      <input
+        type="number"
+        id="goldRate18K"
+        name="goldRate18K"
+        required
+      /><br /><br />
 
       <label>Gold Rate (per gram) 14K:</label><br />
-      <input type="number" id="goldRate14K" name="goldRate14K" required /><br /><br />
+      <input
+        type="number"
+        id="goldRate14K"
+        name="goldRate14K"
+        required
+      /><br /><br />
 
       <!-- SILVER -->
       <div class="section-label">⚪ Silver Rate</div>
 
       <label>Silver Rate (per gram):</label><br />
-      <input type="number" id="silverRate" name="silverRate" required /><br /><br />
+      <input
+        type="number"
+        id="silverRate"
+        name="silverRate"
+        required
+      /><br /><br />
 
       <!-- DIAMOND -->
       <div class="section-label">💎 Diamond Rates</div>
 
       <label>IJSI Diamond Rate (per carat):</label><br />
-      <input type="number" id="igiDiamondRate" name="igiDiamondRate" required /><br /><br />
+      <input
+        type="number"
+        id="igiDiamondRate"
+        name="igiDiamondRate"
+        required
+      /><br /><br />
 
       <label>HIVS-SI Diamond Rate (per carat):</label><br />
-      <input type="number" id="giaDiamondRate" name="giaDiamondRate" required /><br /><br />
+      <input
+        type="number"
+        id="giaDiamondRate"
+        name="giaDiamondRate"
+        required
+      /><br /><br />
 
       <label>GHVVS-VS Diamond Rate (per carat):</label><br />
-      <input type="number" id="hrdDiamondRate" name="hrdDiamondRate" required /><br /><br />
+      <input
+        type="number"
+        id="hrdDiamondRate"
+        name="hrdDiamondRate"
+        required
+      /><br /><br />
 
       <!-- HUID -->
       <div class="section-label">🔖 Other</div>
 
       <label>HUID (flat amount per product):</label><br />
       <input type="number" id="huid" name="huid" required /><br /><br />
+
+      <label>Diamond Certificate Charge (₹):</label><br />
+      <input
+        type="number"
+        id="diamondCertCharge"
+        name="diamondCertCharge"
+        required
+      /><br /><br />
 
       <button type="submit" id="submitBtn">
         <span id="btnText">Update Prices</span>
@@ -141,14 +211,15 @@
         progressCount.textContent = "";
 
         const data = {
-          goldRate22K:    document.getElementById("goldRate22K").value,
-          goldRate18K:    document.getElementById("goldRate18K").value,
-          goldRate14K:    document.getElementById("goldRate14K").value,
-          silverRate:     document.getElementById("silverRate").value,
+          goldRate22K: document.getElementById("goldRate22K").value,
+          goldRate18K: document.getElementById("goldRate18K").value,
+          goldRate14K: document.getElementById("goldRate14K").value,
+          silverRate: document.getElementById("silverRate").value,
           igiDiamondRate: document.getElementById("igiDiamondRate").value,
           giaDiamondRate: document.getElementById("giaDiamondRate").value,
           hrdDiamondRate: document.getElementById("hrdDiamondRate").value,
-          huid:           document.getElementById("huid").value,
+          huid: document.getElementById("huid").value,
+          diamondCertCharge: document.getElementById("diamondCertCharge").value,  // ✅ NEW
         };
 
         try {
@@ -164,14 +235,15 @@
             try {
               const progressRes = await fetch("/update-progress");
               const progress = await progressRes.json();
-              const percent = progress.total > 0
-                ? Math.round((progress.done / progress.total) * 100) : 0;
+              const percent =
+                progress.total > 0
+                  ? Math.round((progress.done / progress.total) * 100)
+                  : 0;
 
               progressBar.style.width = percent + "%";
               progressText.textContent = progress.message || "⏳ Processing...";
               if (progress.total > 0) {
-                progressCount.textContent =
-                  `${progress.done} / ${progress.total} products updated (${percent}%)`;
+                progressCount.textContent = `${progress.done} / ${progress.total} products updated (${percent}%)`;
               }
 
               if (!progress.running && progress.status !== "idle") {
@@ -180,12 +252,15 @@
                 submitBtn.disabled = false;
                 spinner.classList.remove("visible");
                 btnText.textContent = "Update Prices";
-                progressText.style.color = progress.status === "done" ? "green" : "red";
-                progressBar.style.background = progress.status === "done" ? "#008060" : "red";
+                progressText.style.color =
+                  progress.status === "done" ? "green" : "red";
+                progressBar.style.background =
+                  progress.status === "done" ? "#008060" : "red";
               }
-            } catch (pollErr) { console.error("Polling error:", pollErr); }
+            } catch (pollErr) {
+              console.error("Polling error:", pollErr);
+            }
           }, 1000);
-
         } catch (err) {
           progressText.style.color = "red";
           progressText.textContent = "❌ Failed to connect to server.";

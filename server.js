@@ -602,31 +602,44 @@ const SHOPIFY_URL = `https://${process.env.SHOPIFY_STORE}/admin/api/2024-04/grap
 //   );
 // });
 
-
-
 app.post("/update-prices", async (req, res) => {
-  const goldRate22K    = Number(req.body.goldRate22K || 0);
-  const goldRate18K    = Number(req.body.goldRate18K || 0);
-  const goldRate14K    = Number(req.body.goldRate14K || 0);
-  const silverRate     = Number(req.body.silverRate || 0);
+  const goldRate22K = Number(req.body.goldRate22K || 0);
+  const goldRate18K = Number(req.body.goldRate18K || 0);
+  const goldRate14K = Number(req.body.goldRate14K || 0);
+  const silverRate = Number(req.body.silverRate || 0);
   const igiDiamondRate = Number(req.body.igiDiamondRate || 0);
   const giaDiamondRate = Number(req.body.giaDiamondRate || 0);
   const hrdDiamondRate = Number(req.body.hrdDiamondRate || 0);
-  const huid           = Number(req.body.huid || 0);
+  const huid = Number(req.body.huid || 0);
+  const diamondCertCharge = Number(req.body.diamondCertCharge || 0); // ✅ NEW
 
   console.log("Rates received:", {
-    goldRate22K, goldRate18K, goldRate14K,
-    silverRate, igiDiamondRate, giaDiamondRate, hrdDiamondRate, huid
+    goldRate22K,
+    goldRate18K,
+    goldRate14K,
+    silverRate,
+    igiDiamondRate,
+    giaDiamondRate,
+    hrdDiamondRate,
+    huid,
   });
 
   // ✅ Respond immediately
   res.json({ message: "Price update started! Tracking progress below." });
 
   // ✅ Run in background
-  runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate, igiDiamondRate, giaDiamondRate, hrdDiamondRate, huid);
+  runPriceUpdate(
+    goldRate22K,
+    goldRate18K,
+    goldRate14K,
+    silverRate,
+    igiDiamondRate,
+    giaDiamondRate,
+    hrdDiamondRate,
+    huid,
+    diamondCertCharge,
+  );
 });
-
-
 
 // Track progress globally
 let updateProgress = {
@@ -754,8 +767,24 @@ let updateProgress = {
 //   }
 // }
 
-async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate, igiDiamondRate, giaDiamondRate, hrdDiamondRate, huid) {
-  updateProgress = { running: true, total: 0, done: 0, status: "running", message: "Fetching products..." };
+async function runPriceUpdate(
+  goldRate22K,
+  goldRate18K,
+  goldRate14K,
+  silverRate,
+  igiDiamondRate,
+  giaDiamondRate,
+  hrdDiamondRate,
+  huid,
+  diamondCertCharge,
+) {
+  updateProgress = {
+    running: true,
+    total: 0,
+    done: 0,
+    status: "running",
+    message: "Fetching products...",
+  };
 
   try {
     const products = await fetchAllProducts();
@@ -774,52 +803,65 @@ async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate,
       const noOfItems = Number(metafieldsMap.no_of_items || 1); // ✅ default 1 if not set
 
       // ✅ Read weights as numbers
-      const goldWeight   = Number(metafieldsMap.gold_weight   || 0);
+      const goldWeight = Number(metafieldsMap.gold_weight || 0);
       const silverWeight = Number(metafieldsMap.silver_weight || 0);
       const diamondCarat = Number(metafieldsMap.diamond_carat || 0);
 
       // ✅ Read gold karat type from metafield (default 22K)
-      const metalType = (metafieldsMap.metal_type || '22K').toString().trim().toUpperCase();
+      const metalType = (metafieldsMap.metal_type || "22K")
+        .toString()
+        .trim()
+        .toUpperCase();
 
       // ✅ Pick correct gold rate based on karat
       let goldRate = goldRate22K; // default
       let makingChargePercent = 0.15; // default 22K
 
-      if (metalType.includes('18')) {
+      if (metalType.includes("18")) {
         goldRate = goldRate18K;
         makingChargePercent = 0.18; // 18K making charge
-      } else if (metalType.includes('14')) {
+      } else if (metalType.includes("14")) {
         goldRate = goldRate14K;
-        makingChargePercent = 0.20; // 14K making charge
+        makingChargePercent = 0.2; // 14K making charge
       } else {
         goldRate = goldRate22K;
         makingChargePercent = 0.15; // 22K making charge
       }
 
       // ✅ Pick correct diamond rate based on diamond_type metafield
-      const diamondType = (metafieldsMap.diamond_type || '').toString().trim().toUpperCase();
+      const diamondType = (metafieldsMap.diamond_type || "")
+        .toString()
+        .trim()
+        .toUpperCase();
       let diamondRate = igiDiamondRate; // default IGI
-      if (diamondType.includes('GIA')) {
+      if (diamondType.includes("GIA")) {
         diamondRate = giaDiamondRate;
-      } else if (diamondType.includes('HRD')) {
+      } else if (diamondType.includes("HRD")) {
         diamondRate = hrdDiamondRate;
       }
 
       // ✅ Price calculation
-      const goldValue    = goldWeight * goldRate;
-      const silverValue  = silverWeight * silverRate;
+      const goldValue = goldWeight * goldRate;
+      const silverValue = silverWeight * silverRate;
       const diamondValue = diamondCarat * diamondRate;
 
-      const metalSubtotal  = goldValue + silverValue + diamondValue;
-      const makingCharge   = metalSubtotal * makingChargePercent;
+      const metalSubtotal = goldValue + silverValue + diamondValue;
+      const makingCharge = metalSubtotal * makingChargePercent;
       // const makingCharge = goldValue * makingChargePercent; // ✅ Making charge is only on gold value, not on silver/diamond
-     const huidCharge = huid * noOfItems;
+      let huidCharge = huid * noOfItems;
       // const huidCharge     = huid;
-      const subtotal       = metalSubtotal + makingCharge + huidCharge;
 
-      // const gst            = subtotal * 0.03;
-      const gst            = (subtotal - huidCharge) * 0.03;
-      const finalPrice     = (subtotal + gst).toFixed(2);
+      // ✅ NEW: If product has diamond, add certificate charge to HUID
+      // let huidCharge = huid;
+      if (diamondCarat > 0 && diamondRate > 0) {
+        huidCharge = huid + diamondCertCharge; // Regular HUID + Diamond Certificate
+      }
+
+      const subtotal = metalSubtotal + makingCharge + huidCharge;
+
+      // const gst = subtotal * 0.03;
+      const gst = (subtotal - huidCharge) * 0.03;
+      const finalPrice = (subtotal + gst).toFixed(2);
 
       const variants = product.variants.edges.map((v) => ({
         id: v.node.id,
@@ -829,22 +871,24 @@ async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate,
       await updateVariantPrice(product.id, variants);
 
       await saveBreakdownMetafields(product.id, {
-        gold_value:    goldValue.toFixed(2),
-        silver_value:  silverValue.toFixed(2),
+        gold_value: goldValue.toFixed(2),
+        silver_value: silverValue.toFixed(2),
         diamond_value: diamondValue.toFixed(2),
         making_charge: makingCharge.toFixed(2),
-        making_charge_percent:   (makingChargePercent * 100).toFixed(0), // ✅ Add this
-        huid:          huidCharge.toFixed(2),
-        subtotal:      subtotal.toFixed(2),
-        gst:           gst.toFixed(2),
-        final_price:   finalPrice,
-        gold_rate:     goldRate.toFixed(2),
-        silver_rate:   silverRate.toFixed(2),
-        diamond_rate:  diamondRate.toFixed(2),
+        making_charge_percent: (makingChargePercent * 100).toFixed(0), // ✅ Add this
+        huid: huidCharge.toFixed(2),
+        subtotal: subtotal.toFixed(2),
+        gst: gst.toFixed(2),
+        final_price: finalPrice,
+        gold_rate: goldRate.toFixed(2),
+        silver_rate: silverRate.toFixed(2),
+        diamond_rate: diamondRate.toFixed(2),
       });
 
       updateProgress.done++;
-      console.log(`✅ ${updateProgress.done}/${updateProgress.total} - ${product.title} [${metalType}] [${diamondType || 'No Diamond'}]`);
+      console.log(
+        `✅ ${updateProgress.done}/${updateProgress.total} - ${product.title} [${metalType}] [${diamondType || "No Diamond"}]`,
+      );
     });
 
     updateProgress = {
@@ -852,11 +896,16 @@ async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate,
       total: updateProgress.total,
       done: updateProgress.total,
       status: "done",
-      message: `✅ All ${updateProgress.total} products updated!`
+      message: `✅ All ${updateProgress.total} products updated!`,
     };
-
   } catch (err) {
-    updateProgress = { running: false, total: 0, done: 0, status: "error", message: "❌ Update failed: " + err.message };
+    updateProgress = {
+      running: false,
+      total: 0,
+      done: 0,
+      status: "error",
+      message: "❌ Update failed: " + err.message,
+    };
     console.error(err.message);
   }
 }
@@ -995,7 +1044,7 @@ async function saveBreakdownMetafields(productId, breakdown) {
     key: key,
     value: String(value),
     // type: "number_decimal",
-    type: key === "diamond_type" ? "single_line_text_field" : "number_decimal",  // ✅ Handle string
+    type: key === "diamond_type" ? "single_line_text_field" : "number_decimal", // ✅ Handle string
   }));
 
   const variables = {
