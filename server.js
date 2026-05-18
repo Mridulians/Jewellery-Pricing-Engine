@@ -816,7 +816,9 @@ async function runPriceUpdate(goldRate22K, goldRate18K, goldRate14K, silverRate,
      const huidCharge = huid * noOfItems;
       // const huidCharge     = huid;
       const subtotal       = metalSubtotal + makingCharge + huidCharge;
-      const gst            = subtotal * 0.03;
+
+      // const gst            = subtotal * 0.03;
+      const gst            = (subtotal - huidCharge) * 0.03;
       const finalPrice     = (subtotal + gst).toFixed(2);
 
       const variants = product.variants.edges.map((v) => ({
