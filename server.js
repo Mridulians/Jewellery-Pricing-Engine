@@ -854,7 +854,7 @@ async function runPriceUpdate(
       // ✅ NEW: If product has diamond, add certificate charge to HUID
       // let huidCharge = huid;
       if (diamondCarat > 0 && diamondRate > 0) {
-        huidCharge = huid + diamondCertCharge; // Regular HUID + Diamond Certificate
+        huidCharge = huidCharge + diamondCertCharge; // Regular HUID + Diamond Certificate
       }
 
       const subtotal = metalSubtotal + makingCharge + huidCharge;
