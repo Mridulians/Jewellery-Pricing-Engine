@@ -819,10 +819,10 @@ async function runPriceUpdate(
 
       if (metalType.includes("18")) {
         goldRate = goldRate18K;
-        makingChargePercent = 0.18; // 18K making charge
+        makingChargePercent = 0.15; // 18K making charge
       } else if (metalType.includes("14")) {
         goldRate = goldRate14K;
-        makingChargePercent = 0.2; // 14K making charge
+        makingChargePercent = 0.15; // 14K making charge
       } else {
         goldRate = goldRate22K;
         makingChargePercent = 0.15; // 22K making charge
